@@ -1,8 +1,11 @@
 package rps.bll.player;
 
+// Project imports
 import rps.bll.game.IGameState;
 import rps.bll.game.Move;
 import rps.bll.game.Result;
+
+// Java imports
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -10,8 +13,12 @@ import java.util.Random;
 public class Bot implements IPlayer {
     private String name;
     private PlayerType type;
+    private final Random random = new Random();
 
+    // idx 0 = rock, 1 = paper, 2 = scissor
     private final int[][] transitionMatrix = new int[3][3];
+
+    private int lastProcessedIndex = 0;
 
     public Bot(String name, PlayerType type) {
         this.name = name;
@@ -30,25 +37,28 @@ public class Bot implements IPlayer {
 
     @Override
     public Move doMove(IGameState state) {
-        ArrayList<Result> history = (ArrayList<Result>) state.getHistoricResults();
-
-        if (history.size() < 2) {
-            return getRandomMove();
-        }
+        List<Result> history = new ArrayList<>(state.getHistoricResults());
 
         updateMatrix(history);
+
+        if (history.isEmpty()) {
+            return getRandomMove();
+        }
 
         Move lastOpponentMove = getOpponentMoveFromResult(history.get(history.size() - 1));
         int lastIdx = lastOpponentMove.ordinal();
 
         int predictedIdx = 0;
-        for (int i = 1; i < 3; i++) {
-            if (transitionMatrix[lastIdx][i] > transitionMatrix[lastIdx][predictedIdx]) {
+        int maxCount = -1;
+
+        for (int i = 0; i < 3; i++) {
+            if (transitionMatrix[lastIdx][i] > maxCount) {
+                maxCount = transitionMatrix[lastIdx][i];
                 predictedIdx = i;
             }
         }
 
-        if (transitionMatrix[lastIdx][predictedIdx] == 0) {
+        if (maxCount <= 0) {
             return getRandomMove();
         }
 
@@ -57,13 +67,16 @@ public class Bot implements IPlayer {
     }
 
     private void updateMatrix(List<Result> history) {
-        Result latestResult = history.get(history.size() - 1);
-        Result previousResult = history.get(history.size() - 2);
+        while (lastProcessedIndex < history.size() - 1) {
+            Result firstRound = history.get(lastProcessedIndex);
+            Result secondRound = history.get(lastProcessedIndex + 1);
 
-        int prevIdx = getOpponentMoveFromResult(previousResult).ordinal();
-        int currentIdx = getOpponentMoveFromResult(latestResult).ordinal();
+            int prevMoveIdx = getOpponentMoveFromResult(firstRound).ordinal();
+            int nextMoveIdx = getOpponentMoveFromResult(secondRound).ordinal();
 
-        transitionMatrix[prevIdx][currentIdx]++;
+            transitionMatrix[prevMoveIdx][nextMoveIdx]++;
+            lastProcessedIndex++;
+        }
     }
 
     private Move getOpponentMoveFromResult(Result result) {
@@ -75,12 +88,15 @@ public class Bot implements IPlayer {
     }
 
     private Move getCounterMove(Move move) {
-        if (move == Move.Rock) return Move.Paper;
-        if (move == Move.Paper) return Move.Scissor;
-        return Move.Rock;
+        switch (move) {
+            case Rock: return Move.Paper;
+            case Paper: return Move.Scissor;
+            case Scissor: return Move.Rock;
+            default: return getRandomMove();
+        }
     }
 
     private Move getRandomMove() {
-        return Move.values()[new Random().nextInt(3)];
+        return Move.values()[random.nextInt(3)];
     }
 }
