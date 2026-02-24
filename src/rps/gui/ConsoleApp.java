@@ -26,7 +26,7 @@ public class ConsoleApp {
         String playerName = keyboard.next();
 
         IPlayer human = new Player(playerName, PlayerType.Human);
-        IPlayer bot = new Player(getRandomBotName(), PlayerType.AI);
+        IPlayer bot = new Bot(getRandomBotName(), PlayerType.AI);
 
         System.out.println("Your opponent is " + bot.getPlayerName());
         System.out.println("Starting game.... good luck both!");
