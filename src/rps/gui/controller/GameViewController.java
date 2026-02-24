@@ -47,17 +47,11 @@ public class GameViewController implements Initializable {
         lstHistory.setItems(historyItems);
     }
 
-    /**
-     * Handles the click event for Rock, Paper, and Scissor buttons.
-     * All three buttons in FXML point to this method.
-     */
     @FXML
     private void handleMove(ActionEvent event) {
-        // Get the button that was clicked
         Button clickedButton = (Button) event.getSource();
         String buttonId = clickedButton.getId();
 
-        // Map the button ID to a Move enum
         Move playerMove;
         if (buttonId.equals("btnRock")) {
             playerMove = Move.Rock;
@@ -66,18 +60,15 @@ public class GameViewController implements Initializable {
         } else if (buttonId.equals("btnScissor")) {
             playerMove = Move.Scissor;
         } else {
-            return; // Safety check
+            return;
         }
 
-        // Execute the round
         processRound(playerMove);
     }
 
     private void processRound(Move playerMove) {
-        // Let the GameManager determine the outcome
         Result result = gameManager.playRound(playerMove);
 
-        // Update scores and history
         updateUI(result);
     }
 
@@ -99,22 +90,18 @@ public class GameViewController implements Initializable {
             roundResultText = "Round " + result.getRoundNumber() + ": BOT WON! (" + result.getWinnerMove() + " beats " + result.getLoserMove() + ")";
         }
 
-        // Add result to the top of the history list
         historyItems.add(0, roundResultText);
     }
 
     @FXML
     private void handleReset(ActionEvent event) {
-        // Reset scores
         humanWins = 0;
         botWins = 0;
         lblPlayerScore.setText("0");
         lblBotScore.setText("0");
 
-        // Clear history
         historyItems.clear();
 
-        // Re-initialize to reset Markov bot memory and round counter
         initialize(null, null);
     }
 
