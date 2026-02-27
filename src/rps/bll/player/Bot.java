@@ -16,7 +16,7 @@ public class Bot implements IPlayer {
     private final Random random = new Random();
 
     // idx 0 = rock, 1 = paper, 2 = scissor
-    private final int[][] transitionMatrix = new int[3][3];
+    private final int[][] transitionMatrix = new int[Move.values().length][Move.values().length];
 
     private int lastProcessedIndex = 0;
 
@@ -37,21 +37,21 @@ public class Bot implements IPlayer {
 
     @Override
     public Move doMove(IGameState state) {
-        List<Result> history = new ArrayList<>(state.getHistoricResults());
-
-        updateMatrix(history);
+        List<Result> history = new ArrayList<Result>(state.getHistoricResults());
 
         if (history.isEmpty()) {
             return getRandomMove();
         }
 
-        Move lastOpponentMove = getOpponentMoveFromResult(history.get(history.size() - 1));
+        updateMatrix(history);
+
+        Move lastOpponentMove = getOpponentMoveFromResult(history.getLast());
         int lastIdx = lastOpponentMove.ordinal();
 
         int predictedIdx = 0;
         int maxCount = -1;
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < Move.values().length; i++) {
             if (transitionMatrix[lastIdx][i] > maxCount) {
                 maxCount = transitionMatrix[lastIdx][i];
                 predictedIdx = i;
@@ -80,23 +80,20 @@ public class Bot implements IPlayer {
     }
 
     private Move getOpponentMoveFromResult(Result result) {
-        if (result.getWinnerPlayer().getPlayerType() == PlayerType.Human) {
-            return result.getWinnerMove();
-        } else {
-            return result.getLoserMove();
-        }
+        return result.getWinnerPlayer().getPlayerType() == PlayerType.Human
+                ? result.getWinnerMove()
+                : result.getLoserMove();
     }
 
     private Move getCounterMove(Move move) {
-        switch (move) {
-            case Rock: return Move.Paper;
-            case Paper: return Move.Scissor;
-            case Scissor: return Move.Rock;
-            default: return getRandomMove();
-        }
+        return switch (move) {
+            case Rock -> Move.Paper;
+            case Paper -> Move.Scissor;
+            case Scissor -> Move.Rock;
+        };
     }
 
     private Move getRandomMove() {
-        return Move.values()[random.nextInt(3)];
+        return Move.values()[random.nextInt(Move.values().length)];
     }
 }
