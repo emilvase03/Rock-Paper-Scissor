@@ -1,11 +1,13 @@
 package rps.gui.controller;
 
 // Java imports
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -36,7 +38,7 @@ public class GameViewController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         Player human = new Player("PLAYER", PlayerType.Human);
-        Bot bot = new Bot("U_LOSE", PlayerType.AI);
+        Bot bot = new Bot("COMPUTER", PlayerType.AI);
 
         lblPlayerName.setText(human.getPlayerName());
         lblBotName.setText(bot.getPlayerName());
@@ -52,31 +54,27 @@ public class GameViewController implements Initializable {
         Button clickedButton = (Button) event.getSource();
         String buttonId = clickedButton.getId();
 
-        Move playerMove;
-        if (buttonId.equals("btnRock")) {
-            playerMove = Move.Rock;
-        } else if (buttonId.equals("btnPaper")) {
-            playerMove = Move.Paper;
-        } else if (buttonId.equals("btnScissor")) {
-            playerMove = Move.Scissor;
-        } else {
-            return;
-        }
+        Move playerMove = switch (buttonId) {
+            case "btnRock" -> Move.Rock;
+            case "btnPaper" -> Move.Paper;
+            case "btnScissor" -> Move.Scissor;
+            default -> null;
+        };
+        if (playerMove == null) return;
 
-        processRound(playerMove);
-    }
-
-    private void processRound(Move playerMove) {
         Result result = gameManager.playRound(playerMove);
-
         updateUI(result);
     }
 
     private void updateUI(Result result) {
-        String roundResultText = "";
-        Move botMove = (result.getWinnerPlayer().getPlayerType() == PlayerType.AI)
+        // determine the bot move regardless of outcome
+        Move botMove = (result.getType() == ResultType.Tie)
+                ? result.getWinnerMove()
+                : (result.getWinnerPlayer().getPlayerType() == PlayerType.AI)
                 ? result.getWinnerMove()
                 : result.getLoserMove();
+
+        String roundResultText;
 
         if (result.getType() == ResultType.Tie) {
             roundResultText = "Round " + result.getRoundNumber() + ": TIE! (Both played " + botMove + ")";
@@ -90,7 +88,7 @@ public class GameViewController implements Initializable {
             roundResultText = "Round " + result.getRoundNumber() + ": BOT WON! (" + result.getWinnerMove() + " beats " + result.getLoserMove() + ")";
         }
 
-        historyItems.add(0, roundResultText);
+        historyItems.addFirst(roundResultText);
     }
 
     @FXML
@@ -99,14 +97,15 @@ public class GameViewController implements Initializable {
         botWins = 0;
         lblPlayerScore.setText("0");
         lblBotScore.setText("0");
-
         historyItems.clear();
 
-        initialize(null, null);
+        Player human = new Player("PLAYER", PlayerType.Human);
+        Bot bot = new Bot("COMPUTER", PlayerType.AI);
+        gameManager = new GameManager(human, bot);
     }
 
     @FXML
     private void handleExit(ActionEvent event) {
-        System.exit(0);
+        Platform.exit();
     }
 }
