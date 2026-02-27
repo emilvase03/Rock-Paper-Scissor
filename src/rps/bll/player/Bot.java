@@ -67,17 +67,21 @@ public class Bot implements IPlayer {
     }
 
     private void updateMatrix(List<Result> history) {
+        // process all consecutive pairs of rounds.
         while (lastProcessedIndex < history.size() - 1) {
             Result firstRound = history.get(lastProcessedIndex);
             Result secondRound = history.get(lastProcessedIndex + 1);
 
+            // get the move the opponent played in each of the two consecutive rounds
             int prevMoveIdx = getOpponentMoveFromResult(firstRound).ordinal();
             int nextMoveIdx = getOpponentMoveFromResult(secondRound).ordinal();
 
             transitionMatrix[prevMoveIdx][nextMoveIdx]++;
+
             lastProcessedIndex++;
         }
     }
+
 
     private Move getOpponentMoveFromResult(Result result) {
         return result.getWinnerPlayer().getPlayerType() == PlayerType.Human
